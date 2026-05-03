@@ -17,7 +17,7 @@ fun ExpenseApp(viewModel: ExpenseViewModel) {
             HomeScreen(navController, viewModel)
         }
         composable("stats") {
-            StatsScreen()
+            StatsScreen(viewModel = viewModel)  // ✅ Fixed
         }
     }
 }

@@ -5,11 +5,11 @@ import java.util.*
 fun isWeekend(timestamp: Long): Boolean {
     val calendar = Calendar.getInstance()
     calendar.timeInMillis = timestamp
-
     val day = calendar.get(Calendar.DAY_OF_WEEK)
 
     return day == Calendar.SATURDAY || day == Calendar.SUNDAY
 }
+
 fun getWeekendInsight(expenses: List<Expense>): String {
 
     var weekendTotal = 0.0
@@ -29,6 +29,7 @@ fun getWeekendInsight(expenses: List<Expense>): String {
         "📊 You spend more on WEEKDAYS"
     }
 }
+
 fun getTopCategory(expenses: List<Expense>): String {
 
     val map = mutableMapOf<String, Double>()

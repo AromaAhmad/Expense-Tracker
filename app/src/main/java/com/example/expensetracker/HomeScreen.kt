@@ -9,38 +9,16 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import java.util.Calendar
-
-// ─────────────────────────────────────────────────────────────
-// ✅ TOP-LEVEL helper functions — outside HomeScreen completely
-// ─────────────────────────────────────────────────────────────
-
-fun calculateWeekendInsight(expenses: List<Expense>): String {
-    val calendar = Calendar.getInstance()
-    val weekendExpenses = expenses.filter {
-        calendar.timeInMillis = it.date
-        val day = calendar.get(Calendar.DAY_OF_WEEK)
-        day == Calendar.SATURDAY || day == Calendar.SUNDAY
-    }
-    val total = weekendExpenses.sumOf { it.amount }
-    return if (total > 0) "Weekend spending: Rs ${"%.2f".format(total)}" else "No weekend expenses yet"
-}
-
-fun calculateTopCategory(expenses: List<Expense>): String {
-    if (expenses.isEmpty()) return "None"
-    return expenses
-        .groupBy { it.category }
-        .maxByOrNull { it.value.sumOf { e -> e.amount } }
-        ?.key ?: "None"
-}
 
 @Composable
 fun HomeScreen(navController: NavController, viewModel: ExpenseViewModel) {
 
     val expenses by viewModel.expenses.collectAsState()
 
-    var title    by remember { mutableStateOf("") }
-    var amount   by remember { mutableStateOf("") }
+    val totalAmount = expenses.sumOf { it.amount }
+
+    var title by remember { mutableStateOf("") }
+    var amount by remember { mutableStateOf("") }
     var category by remember { mutableStateOf("General") }
     var expanded by remember { mutableStateOf(false) }
 
@@ -59,22 +37,18 @@ fun HomeScreen(navController: NavController, viewModel: ExpenseViewModel) {
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        // ─── CATEGORY DROPDOWN ────────────────────────────────────────
+        // ─── CATEGORY DROPDOWN ─────────────────────────────
         Box {
+
             OutlinedTextField(
                 value = category,
                 onValueChange = {},
                 label = { Text("Category") },
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { expanded = true },
+                    .fillMaxWidth(),
                 readOnly = true
             )
-            Box(
-                modifier= Modifier
-                    .matchParentSize()
-                    .clickable {expanded= true }
-            )
+
             DropdownMenu(
                 expanded = expanded,
                 onDismissRequest = { expanded = false }
@@ -89,11 +63,18 @@ fun HomeScreen(navController: NavController, viewModel: ExpenseViewModel) {
                     )
                 }
             }
+
+            // click layer
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .clickable { expanded = true }
+            )
         }
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // ─── TITLE INPUT ──────────────────────────────────────────────
+        // ─── TITLE ─────────────────────────────
         OutlinedTextField(
             value = title,
             onValueChange = { title = it },
@@ -103,7 +84,7 @@ fun HomeScreen(navController: NavController, viewModel: ExpenseViewModel) {
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // ─── AMOUNT INPUT ─────────────────────────────────────────────
+        // ─── AMOUNT ────────────────────────────
         OutlinedTextField(
             value = amount,
             onValueChange = { amount = it },
@@ -113,10 +94,10 @@ fun HomeScreen(navController: NavController, viewModel: ExpenseViewModel) {
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // ─── ADD BUTTON ───────────────────────────────────────────────
+        // ─── ADD BUTTON ────────────────────────
         Button(
             onClick = {
-                if (title.isNotEmpty() && amount.isNotEmpty()) {
+                if (title.isNotBlank() && amount.isNotBlank()) {
                     viewModel.addExpense(
                         Expense(
                             title = title,
@@ -136,14 +117,18 @@ fun HomeScreen(navController: NavController, viewModel: ExpenseViewModel) {
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        // ─── INSIGHTS ─────────────────────────────────────────────────
-        // ✅ Top-level functions called freely here — no errors
+        // ─── INSIGHTS ──────────────────────────
         Text(text = calculateWeekendInsight(expenses))
         Text(text = "Top Category: ${calculateTopCategory(expenses)}")
 
+        Text(
+            text = "Total Spending: Rs $totalAmount",
+            style = MaterialTheme.typography.titleLarge
+        )
+
         Spacer(modifier = Modifier.height(10.dp))
 
-        // ─── STATS BUTTON ─────────────────────────────────────────────
+        // ─── NAVIGATION ────────────────────────
         Button(
             onClick = { navController.navigate("stats") },
             modifier = Modifier.fillMaxWidth()
@@ -153,7 +138,7 @@ fun HomeScreen(navController: NavController, viewModel: ExpenseViewModel) {
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        // ─── EXPENSE LIST ─────────────────────────────────────────────
+        // ─── LIST ──────────────────────────────
         LazyColumn {
             items(expenses) { expense ->
                 Card(
@@ -163,17 +148,9 @@ fun HomeScreen(navController: NavController, viewModel: ExpenseViewModel) {
                 ) {
                     Column(modifier = Modifier.padding(8.dp)) {
 
-                        Text(
-                            text = expense.title,
-                            style = MaterialTheme.typography.titleMedium
-                        )
-
-                        Text(text = "Rs ${expense.amount}")
-
-                        Text(
-                            text = expense.category,
-                            style = MaterialTheme.typography.labelSmall
-                        )
+                        Text(expense.title)
+                        Text("Rs ${expense.amount}")
+                        Text(expense.category)
 
                         Button(
                             onClick = { viewModel.deleteExpense(expense) }
@@ -184,6 +161,5 @@ fun HomeScreen(navController: NavController, viewModel: ExpenseViewModel) {
                 }
             }
         }
-
-    } // ✅ Column closes here
+    }
 }
